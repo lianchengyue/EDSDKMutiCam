@@ -1,4 +1,5 @@
 #include "CanonCameraWrapper.h"
+#include <direct.h>  //for windows
 
 
 //---------------------------------------------------------------------
@@ -27,11 +28,9 @@ CanonCameraWrapper::CanonCameraWrapper(){
 }
 
 //---------------------------------------------------------------------
-CanonCameraWrapper::~CanonCameraWrapper(){
-    if(cameraCount < 2)
-        destroy();
-    else
-        destroyMutiCam();
+CanonCameraWrapper::~CanonCameraWrapper()
+{
+    destroyMutiCam();
 }
 
 CanonCameraWrapper* CanonCameraWrapper::instance = new CanonCameraWrapper();
@@ -47,80 +46,11 @@ CanonCameraWrapper* CanonCameraWrapper::getInstance()
 //---------------------------------------------------------------------
 
 //---------------------------------------------------------------------
-bool CanonCameraWrapper::InitCam(int cameraID){
-    if( theCamera != NULL || theCameraList != NULL)
-    {
-        destroy();
-    }
-
-    EdsError err = EDS_ERR_OK;
-    cameraCount = 0 ;
-
-    err = EdsInitializeSDK();
-
-    if(err != EDS_ERR_OK){
-       printf("Couldn't open sdk!\n");
-        return false;
-    }else{
-        printf("Opening the sdk\n");
-        sdkRef++;
-    }
-
-    //Sleep(200);
-    Sleep(10);
-
-    // Initialize
-    // Get the camera list
-    err = EdsGetCameraList(&theCameraList);
-
-    // Get the number of cameras.
-    if( err == EDS_ERR_OK ){
-        err = EdsGetChildCount( theCameraList, &cameraCount );
-
-        printf("flq, cameraNum=%d, cameraID=%d\n", cameraCount, cameraID);
-        if ( 0 == cameraCount ){
-            err = EDS_ERR_DEVICE_NOT_FOUND;
-            printf("No devices found!\n");
-            return false;
-        }
-    }
-
-    // Get the camera
-    printf("flq1, cameraNum=%d, cameraID=%d\n", cameraCount, cameraID);
-    if ( err == EDS_ERR_OK ){
-        if (cameraID >= cameraCount){
-            printf("No camera of id %i exists - number of cameras is %i\n", cameraID, cameraCount);
-            return false;
-        }
-
-        printf("We are opening camera %i!\n", cameraID);
-
-        err = EdsGetChildAtIndex( theCameraList , cameraID , &theCamera );
-
-        //Release camera list
-        if(theCameraList != NULL){
-            EdsRelease(theCameraList);
-        }
-
-        if(err == EDS_ERR_OK){
-            printf("We are connected!\n");
-            state = CAMERA_READY;
-            //return true;
-        }else{
-            printf("We are not connected!\n");
-            state = CAMERA_UNKNOWN;
-            return false;
-        }
-
-        registerCallback();
-        return true;
-    }
-}
 
 bool CanonCameraWrapper::InitMutiCam(){
     if( theMutiCamera != NULL )
     {
-        destroyMutiCam();
+//        destroyMutiCam();
     }
 
     EdsError err = EDS_ERR_OK;
@@ -185,32 +115,13 @@ bool CanonCameraWrapper::InitMutiCam(){
             return false;
         }
 
+        //文件回调，如保存文件功能
         registerCallback();
         return true;
     }
 }
 
 //---------------------------------------------------------------------
-void CanonCameraWrapper::destroy(){
-    if( getLiveViewActive() ){
-        endLiveView();
-    }
-
-    if( theCamera != NULL){
-        closeSession();
-    }
-
-    easyRelease(theCamera);
-    easyRelease(theCameraList);
-
-    if( sdkRef > 0 ){
-        sdkRef--;
-        if( sdkRef == 0 ){
-            EdsTerminateSDK();
-            printf("Terminating the sdk\n");
-        }
-    }
-}
 
 void CanonCameraWrapper::destroyMutiCam(){
     if( getLiveViewActive() ){
@@ -218,7 +129,7 @@ void CanonCameraWrapper::destroyMutiCam(){
     }
 
     if( theMutiCamera != NULL){
-        closeSession();
+        closeMutiCamSession();
     }
 
     for(int i=0; i<cameraCount; i++)
@@ -237,26 +148,13 @@ void CanonCameraWrapper::destroyMutiCam(){
 }
 
 //---------------------------------------------------------------------
-bool CanonCameraWrapper::openSession(){
-    EdsError err = EDS_ERR_OK;
-
-    err = EdsOpenSession( theCamera );
-    if(err == EDS_ERR_OK){
-        printf("We are opening session!\n");
-        state = CAMERA_OPEN;
-        return true;
-    }
-    else{
-        printf("Failed at opening Single Cam session!\n");
-    }
-    return false;
-}
 
 bool CanonCameraWrapper::openMutiCamSession(){
     EdsError err = EDS_ERR_OK;
 
     for(int i=0; i<cameraCount; i++)
     {
+        //important!!!!!!!!!!!!!!!!!!!!!
         err = EdsOpenSession( theMutiCamera[i] );
     }
     if(err == EDS_ERR_OK){
@@ -271,21 +169,6 @@ bool CanonCameraWrapper::openMutiCamSession(){
 }
 
 //---------------------------------------------------------------------
-bool CanonCameraWrapper::closeSession(){
-    if( state == CAMERA_CLOSED)return false;
-    EdsError err = EDS_ERR_OK;
-
-    err = EdsCloseSession( theCamera );
-    if(err == EDS_ERR_OK){
-        printf("We are closing session!\n");
-        state = CAMERA_CLOSED;
-        return true;
-    }
-    else{
-        printf("We failed at closing session!\n");
-    }
-    return false;
-}
 bool CanonCameraWrapper::closeMutiCamSession(){
     if( state == CAMERA_CLOSED)return false;
     EdsError err = EDS_ERR_OK;
@@ -316,11 +199,30 @@ void CanonCameraWrapper::setDeleteFromCameraAfterDownload(bool deleteAfter){
 }
 
 //---------------------------------------------------------------------
+/*
 void CanonCameraWrapper::setDownloadPath(string downloadPathStr){
     downloadPath = downloadPathStr;
     if( downloadPath != "" ){
         if(downloadPath[ downloadPath.length()-1 ] != '/' ){
-            downloadPath  = downloadPath + "/";
+            downloadPath  = downloadPath + "\\";
+        }
+    }
+}
+*/
+void CanonCameraWrapper::setDownloadPath(string downloadPathStr){
+    downloadPath = downloadPathStr;
+    if( downloadPath != "" )
+    {
+        if(downloadPath[downloadPath.length() - 1] != '\\' ){
+            downloadPath  = downloadPath + "\\";
+        }
+
+        for(int i=0; i<cameraCount; i++){
+            char folderName[20]={0};
+            itoa(i, folderName ,10);
+            downloadMutiPath[i] = downloadPath + folderName + "\\";
+            printf("folderName=%s, downloadMutiPath[i]=%s\n", folderName, downloadMutiPath[i].c_str());
+            mkdir(downloadMutiPath[i].c_str());
         }
     }
 }
@@ -351,16 +253,10 @@ bool CanonCameraWrapper::sendCommand( EdsCameraCommand inCommand,  EdsInt32 inPa
     EdsError err = EDS_ERR_OK;
 
     if( preCommand() ){
-        if(cameraCount < 2)
-        {
-            err = EdsSendCommand(theCamera, inCommand, inParam);
-        } else
-        {
-            printf("Right Way, EdsSendCommand Muti!\n");
-            for(int i=0; i<cameraCount; i++){
-                printf("take the %dth CAM!\n", i);
-                err = EdsSendCommand(theMutiCamera[i], inCommand, inParam);
-            }
+        printf("Right Way, EdsSendCommand Muti!\n");
+        for(int i=0; i<cameraCount; i++){
+            printf("take the %dth CAM!\n", i);
+            err = EdsSendCommand(theMutiCamera[i], inCommand, inParam);
         }
 
         postCommand();
@@ -421,7 +317,7 @@ bool CanonCameraWrapper::beginLiveView(){
         // Set to the camera.
         err = EdsSetPropertyData(theCamera, kEdsPropID_Evf_OutputDevice, 0, sizeof(device), &device);
     }
-
+#if 0
     //Notification of error
     if(err != EDS_ERR_OK){
         // It doesn't retry it at device busy
@@ -434,6 +330,9 @@ bool CanonCameraWrapper::beginLiveView(){
         }
         return false;
     }
+#else
+        return true;
+#endif
 }
 
 //---------------------------------------------------------------------
@@ -500,7 +399,7 @@ bool CanonCameraWrapper::grabPixelsFromLiveView(int rotateByNTimes90){
 
     // Download live view image data.
     if (err == EDS_ERR_OK){
-        err = EdsDownloadEvfImage(theCamera, evfImage);
+////flq        err = EdsDownloadEvfImage(theCamera, evfImage);
     }
 
     if (err == EDS_ERR_OK){
@@ -593,7 +492,7 @@ bool CanonCameraWrapper::saveImageFromLiveView(string saveName){
 
     // Download live view image data.
     if (err == EDS_ERR_OK){
-        err = EdsDownloadEvfImage(theCamera, evfImage);
+///flq        err = EdsDownloadEvfImage(theCamera, evfImage);
     }
 
     if (err == EDS_ERR_OK){
@@ -799,7 +698,11 @@ bool CanonCameraWrapper::isTransfering(){
 
 //---------------------------------------------------------------------
 bool CanonCameraWrapper::downloadImage(EdsDirectoryItemRef directoryItem){
-    if( !downloadEnabled ) return false;
+    printf("\ndownloadImage\n");
+    if(!downloadEnabled)
+    {
+        return false;
+    }
 
     EdsError err = EDS_ERR_OK;
     EdsStreamRef stream = NULL;
@@ -831,7 +734,6 @@ bool CanonCameraWrapper::downloadImage(EdsDirectoryItemRef directoryItem){
         lastImageName = imageName;
         lastImagePath = imagePath;
 
-        //printf("Image downloaded in %ims\n", ofGetElapsedTimeMillis()-timeStart);
         printf("Image downloaded in %ims\n", GetTickCount()-timeStart);
 
         err = EdsDownloadComplete(directoryItem);
@@ -846,7 +748,7 @@ bool CanonCameraWrapper::downloadImage(EdsDirectoryItemRef directoryItem){
     return success;
 }
 
-
+//flq,三个回调
 //------------------------------------------------------------------------
 EdsError EDSCALLBACK CanonCameraWrapper::handleObjectEvent(EdsObjectEvent event, EdsBaseRef object, EdsVoid *context) {
     printf("Callback! %i\n", (int)event);
@@ -964,25 +866,41 @@ void CanonCameraWrapper::registerCallback(){
 
         // Set event handler
         if(err == EDS_ERR_OK) {
-            err = EdsSetObjectEventHandler(theCamera,	kEdsObjectEvent_All, handleObjectEvent, this);
+
+        ///    err = EdsSetObjectEventHandler(theCamera,	kEdsObjectEvent_All, handleObjectEvent, this);
+            for(int i=0; i<cameraCount; i++)
+            {
+                err = EdsSetObjectEventHandler(theMutiCamera[i],	kEdsObjectEvent_All, handleObjectEvent, this);
+            }
         }else{
             printf("Unable to set callback EdsSetObjectEventHandler\n");
         }
 
+#if 0
         // Set event handler
         if(err == EDS_ERR_OK) {
-            err = EdsSetPropertyEventHandler(theCamera,	kEdsPropertyEvent_All, handlePropertyEvent, this);
+        ///    err = EdsSetPropertyEventHandler(theCamera,	kEdsPropertyEvent_All, handlePropertyEvent, this);
+            for(int i=0; i<cameraCount; i++)
+            {
+                err = EdsSetPropertyEventHandler(theMutiCamera[i],	kEdsPropertyEvent_All, handlePropertyEvent, this);
+            }
         }else{
             printf("Unable to set callback EdsSetPropertyEventHandler\n");
         }
+#endif
 
+#if 0
         // Set event handler
         if(err == EDS_ERR_OK) {
-            err = EdsSetCameraStateEventHandler(theCamera,	kEdsStateEvent_All, handleStateEvent, this);
+        ///    err = EdsSetCameraStateEventHandler(theCamera,	kEdsStateEvent_All, handleStateEvent, this);
+            for(int i=0; i<cameraCount; i++)
+            {
+                err = EdsSetCameraStateEventHandler(theMutiCamera[i],	kEdsStateEvent_All, handleStateEvent, this);
+            }
         }else{
             printf("Unable to set callback EdsSetPropertyEventHandler\n");
         }
-
+#endif
     }
 
     registered = true;
@@ -1018,12 +936,15 @@ bool CanonCameraWrapper::preCommand(){
         if( needToOpen ){
 
             printf("preCommand(),cameraCount=%d\n", cameraCount);
+            /*
             if(cameraCount<2)
             {
                 readyToGo = openSession();
             } else{
                 readyToGo = openMutiCamSession();
             }
+            */
+            openMutiCamSession();
         }
 
         return readyToGo;
@@ -1041,6 +962,7 @@ void CanonCameraWrapper::postCommand(){
 
     if(state == CAMERA_OPEN && needToOpen){
         printf("postCommand - closing session\n");
-        closeSession();
+        //closeSession();
+        closeMutiCamSession();
     }
 }

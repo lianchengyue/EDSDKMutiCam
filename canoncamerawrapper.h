@@ -20,17 +20,16 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "BeiDou.h"
+
 #include <string>
 using namespace std;
 
 //#define HAVE_OF
 
-#ifdef HAVE_OF
-    #include "ofImage.h"
-#endif
 
 #ifndef BYTE
-    #define BYTE unsigned char
+//    #define BYTE unsigned char
 #endif
 
 #define CAM_NUM_MAX 10
@@ -50,77 +49,6 @@ static void easyRelease(EdsBaseRef &ref){
         ref = NULL;
     }
 }
-
-#if 0
-class memoryImage : public ofImage{
-
-    public:
-
-    bool loadFromMemory(int bytesToRead, unsigned char * jpegBytes, int rotateMode = 0){
-        FIMEMORY *hmem = NULL;
-
-        hmem = FreeImage_OpenMemory((BYTE *)jpegBytes, bytesToRead);
-        if (hmem == NULL){
-            printf("couldn't create memory handle! \n");
-            return false;
-        }
-
-        //get the file type!
-        FREE_IMAGE_FORMAT fif = FreeImage_GetFileTypeFromMemory(hmem);
-        if( fif == -1 ){
-            printf("unable to guess format", fif);
-            return false;
-            FreeImage_CloseMemory(hmem);
-        }
-
-        //make the image!!
-        FIBITMAP * tmpBmp = FreeImage_LoadFromMemory(fif, hmem, 0);
-
-        if( rotateMode > 0 && rotateMode < 4){
-            FIBITMAP * oldBmp = tmpBmp;
-
-            if( rotateMode == 1)tmpBmp = FreeImage_RotateClassic(tmpBmp, 90);
-            if( rotateMode == 2)tmpBmp = FreeImage_RotateClassic(tmpBmp, 180);
-            if( rotateMode == 3)tmpBmp = FreeImage_RotateClassic(tmpBmp, 270);
-
-            FreeImage_Unload(oldBmp);
-        }
-
-        //FreeImage_FlipVertical(tmpBmp);
-
-        putBmpIntoPixels(tmpBmp, myPixels);
-        width 		= FreeImage_GetWidth(tmpBmp);
-        height 		= FreeImage_GetHeight(tmpBmp);
-        bpp 		= FreeImage_GetBPP(tmpBmp);
-
-        swapRgb(myPixels);
-
-        FreeImage_Unload(tmpBmp);
-        FreeImage_CloseMemory(hmem);
-
-        return true;
-    }
-
-
-    //shouldn't have to redefine this but a gcc bug means we do
-    inline void	swapRgb(ofPixels &pix){
-        if (pix.bitsPerPixel != 8){
-            int sizePixels		= pix.width*pix.height;
-            int cnt				= 0;
-            unsigned char temp;
-            int byteCount		= pix.bitsPerPixel/8;
-
-            while (cnt < sizePixels){
-                temp					        = pix.pixels[cnt*byteCount];
-                pix.pixels[cnt*byteCount]		= pix.pixels[cnt*byteCount+2];
-                pix.pixels[cnt*byteCount+2]		= temp;
-                cnt++;
-            }
-        }
-    }
-
-};
-#endif
 
 //NOTE
 //We are missing code for legacy devices
@@ -144,15 +72,15 @@ public:
     //---------------------------------------------------------------------
     //  SDK AND SESSION MANAGEMENT
     //---------------------------------------------------------------------
-    bool InitCam(int cameraID);   //You must call this to init the canon sdk
+    //bool InitCam(int cameraID);   //You must call this to init the canon sdk
     bool InitMutiCam();
-    void destroy();             //To clean up - also called by destructor
+    //void destroy();             //To clean up - also called by destructor
     void destroyMutiCam();
 
     bool openMutiCamSession();
-    bool openSession();         //Begins communication with camera
+    //bool openSession();         //Begins communication with camera
     bool closeMutiCamSession();
-    bool closeSession();        //Ends communication with camera.
+    //bool closeSession();        //Ends communication with camera.
                                 //Note on sessions: Commands like takePicture
                                 //will open a session if none exists. This
                                 //is slower though so consider calling it
@@ -243,6 +171,7 @@ public:
         string lastImageName;
         string lastImagePath;
         string downloadPath;
+        string downloadMutiPath[CAM_NUM_MAX];
         bool downloadEnabled;
         bool bDeleteAfterDownload;
         bool registered;
@@ -251,8 +180,8 @@ public:
         cameraState state;
         EdsCameraRef        theCamera ;
         EdsCameraRef        theMutiCamera[CAM_NUM_MAX] ;
-        EdsCameraRef        theCamera1;
-        EdsCameraRef        theCamera2;
+        //EdsCameraRef        theCamera1;
+        //EdsCameraRef        theCamera2;
         EdsCameraListRef	theCameraList;
 
         EdsUInt32 cameraCount;
