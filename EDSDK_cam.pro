@@ -12,14 +12,16 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     CanonCameraWrapper.cpp \
-    CameraControlDlg.cpp
+    CameraControlDlg.cpp \
+    BeiDou.cpp
 
 HEADERS += \
     CanonCameraWrapper.h \
     CameraControlDlg.h \
     EDSDK/include/EDSDK.h \
     EDSDK/include/EDSDKErrors.h \
-    EDSDK/include/EDSDKTypes.h
+    EDSDK/include/EDSDKTypes.h \
+    BeiDou.h
 
 INCLUDEPATH += \
 "C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt" \

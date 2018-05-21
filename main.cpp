@@ -41,12 +41,12 @@ int main(int argc, char *argv[])
     //test for单例测试，是否成功end
 
     //北斗初始化
-    //BeiDou *mBDGPS = new BeiDou();
+    BeiDou *mBDGPS = new BeiDou();
 
     //相机初始化
     CanonCameraWrapper* ESCamera = CanonCameraWrapper::getInstance();
     //ESCamera->InitCam(0);
-    ESCamera->InitMutiCam();
+    ESCamera->InitMutiCam(mBDGPS);
     ESCamera->setDownloadPath("d:\\EDSDK_File\\");
 
     ESCamera->beginLiveView();

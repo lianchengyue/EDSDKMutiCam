@@ -60,6 +60,11 @@ private:
     //singleton
     static CanonCameraWrapper* instance;
     //singleton end
+    //GPS
+    BeiDou *m_BDGPS;
+    int m_heading;
+    float m_longitude;//经度
+    float m_latitude;//纬度 //
 public:
     //singleton
     static CanonCameraWrapper* getInstance();
@@ -73,7 +78,7 @@ public:
     //  SDK AND SESSION MANAGEMENT
     //---------------------------------------------------------------------
     //bool InitCam(int cameraID);   //You must call this to init the canon sdk
-    bool InitMutiCam();
+    bool InitMutiCam(BeiDou *mBDGPS);
     //void destroy();             //To clean up - also called by destructor
     void destroyMutiCam();
 
@@ -143,14 +148,28 @@ public:
     //Hmm - might be needed for threading - currently doesn't work
     bool isTransfering();
 
+    void setGPS(BeiDou *mBDGPS) { m_BDGPS = mBDGPS;}
+    void getGPSLocation();
+
 
     protected:
         //---------------------------------------------------------------------
         //  PROTECTED STUFF
         //---------------------------------------------------------------------
-
+        //下载拍摄的照片
         bool downloadImage(EdsDirectoryItemRef directoryItem);
+        bool downloadImageFromMutiCam(EdsDirectoryItemRef directoryItem, int CamerSel);
+
         static EdsError EDSCALLBACK handleObjectEvent(EdsObjectEvent inEvent, EdsBaseRef object, EdsVoid *inContext);
+        //static EdsError EDSCALLBACK handleObjectEvent(EdsObjectEvent inEvent, EdsBaseRef object, EdsVoid *inContext, int num);
+        static EdsError EDSCALLBACK handleCam0ObjectEvent(EdsObjectEvent inEvent, EdsBaseRef object, EdsVoid *inContext);
+        static EdsError EDSCALLBACK handleCam1ObjectEvent(EdsObjectEvent inEvent, EdsBaseRef object, EdsVoid *inContext);
+        static EdsError EDSCALLBACK handleCam2ObjectEvent(EdsObjectEvent inEvent, EdsBaseRef object, EdsVoid *inContext);
+        static EdsError EDSCALLBACK handleCam3ObjectEvent(EdsObjectEvent inEvent, EdsBaseRef object, EdsVoid *inContext);
+        static EdsError EDSCALLBACK handleCam4ObjectEvent(EdsObjectEvent inEvent, EdsBaseRef object, EdsVoid *inContext);
+        static EdsError EDSCALLBACK handleCam5ObjectEvent(EdsObjectEvent inEvent, EdsBaseRef object, EdsVoid *inContext);
+        static EdsError EDSCALLBACK handleCam6ObjectEvent(EdsObjectEvent inEvent, EdsBaseRef object, EdsVoid *inContext);
+
         static EdsError EDSCALLBACK handlePropertyEvent(EdsPropertyEvent inEvent,  EdsPropertyID inPropertyID, EdsUInt32 inParam, EdsVoid * inContext);
         static EdsError EDSCALLBACK handleStateEvent(EdsStateEvent inEvent, EdsUInt32 inEventData, EdsVoid * inContext);
 
