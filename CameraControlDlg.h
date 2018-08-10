@@ -42,6 +42,7 @@
 #include <QFileDialog>
 
 #include "CanonCameraWrapper.h"
+#include "BeiDou.h"
 
 namespace Ui
 {
@@ -72,6 +73,7 @@ public slots:
     void takePicture();
     void saveConfig();
     void timerUpdate();
+    void GPSInfoUpdate();
 
 protected:
 
@@ -80,7 +82,20 @@ protected:
 private:
 
     void clearScene();
-    CanonCameraWrapper* pMe;//
+    CanonCameraWrapper* pMe;
+    BeiDou* pBeiDou = BeiDou::getInstance();
+
+    //GPS
+    int gps_stat;
+    int ui_heading;
+    float ui_longitude;//经度
+    float ui_latitude;//纬度
+    QString gpsStateStr;
+    char headingStr[8] = {0};
+    char longtitudeStr[64] = {0};
+    char latitudeStr[64] = {0};
+    char streetStr[MAX_STREET_LENGTH] = {0};
+
 
 private:
 

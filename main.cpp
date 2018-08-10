@@ -28,6 +28,8 @@ int main(int argc, char *argv[])
 
 #else
 {
+    #pragma execution_character_set("utf-8")
+
     QApplication a(argc, argv);
     MainWindow w;
 
@@ -38,14 +40,19 @@ int main(int argc, char *argv[])
     if (singleton1 == singleton2)
         printf("singleton1 = singleton2\n");
     */
+
+    BeiDou* singleton1 = BeiDou::getInstance();
+    BeiDou* singleton2 = BeiDou::getInstance();
+    if (singleton1 == singleton2)
+        printf("singleton1 = singleton2\n");
     //test for单例测试，是否成功end
 
     //北斗初始化
-    BeiDou *mBDGPS = new BeiDou();
+    BeiDou *mBDGPS = BeiDou::getInstance();
+    mBDGPS->getInfoFromInfoDirectory();
 
     //相机初始化
     CanonCameraWrapper* ESCamera = CanonCameraWrapper::getInstance();
-    //ESCamera->InitCam(0);
     ESCamera->InitMutiCam(mBDGPS);
     ESCamera->setDownloadPath("d:\\EDSDK_File\\");
 

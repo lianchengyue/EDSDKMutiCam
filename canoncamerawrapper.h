@@ -62,6 +62,7 @@ private:
     //singleton end
     //GPS
     BeiDou *m_BDGPS;
+    //int m_gpsstate;
     int m_heading;
     float m_longitude;//经度
     float m_latitude;//纬度 //

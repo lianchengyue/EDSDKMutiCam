@@ -260,8 +260,14 @@ void CanonCameraWrapper::disableDownloadOnTrigger(){
 //---------------------------------------------------------------------
 bool CanonCameraWrapper::takePicture()
 {
-    //
-    getGPSLocation();
+    if(GPS_OK == m_BDGPS->getGPSStatus())
+    {
+//        getGPSLocation();
+        return sendCommand(kEdsCameraCommand_TakePicture, 0);
+    }
+    else {
+        printf("北斗GPS状态不佳，不允许拍\n");
+    }
     return sendCommand(kEdsCameraCommand_TakePicture, 0);
 }
 

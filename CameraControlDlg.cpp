@@ -1,4 +1,4 @@
-/** ===========================================================
+﻿/** ===========================================================
  * @file
  *
  * This file is a part of libface project
@@ -50,6 +50,7 @@ MainWindow::MainWindow(QWidget* parent)
     this->connect(ui->saveConfigBtn, SIGNAL(clicked()), this, SLOT(saveConfig()));
 
     QTimer *timer = new QTimer(this);
+    this->connect(timer, SIGNAL(timeout()), this, SLOT(GPSInfoUpdate()));
     this->connect(timer,SIGNAL(timeout()),this,SLOT(timerUpdate()));
     timer->start(1000);
 
@@ -70,7 +71,7 @@ MainWindow::MainWindow(QWidget* parent)
     QString current_date =current_date_time.toString("yyyy.MM.dd hh:mm:ss.zzz ddd");
     //printf("current_date=%s\n", current_date);
 
-    ///set Listener&Observer, FLQ
+    //
     pMe = CanonCameraWrapper::getInstance();
 }
 
@@ -142,8 +143,43 @@ void MainWindow::timerUpdate()
 {
     QDateTime time = QDateTime::currentDateTime();
     QString str = time.toString("yyyy-MM-dd hh:mm:ss dddd");
-    //ui->label->setText(str);
     ui->timeDisplayText->setText(str);
 }
 
+void MainWindow::GPSInfoUpdate()
+{
+    pBeiDou->getInfoFromInfoDirectory();
 
+    gps_stat = pBeiDou->getGPSStatus();
+
+    //GPS状态
+    if(GPS_OK == gps_stat)
+    {
+        gpsStateStr = QString::fromLocal8Bit("GPS信号良好！");
+    } else if(GPS_WEAK == gps_stat){
+        gpsStateStr = QString::fromLocal8Bit("GPS信号弱，无法拍照");
+    } else if(GPS_NO_SIGNAL == gps_stat) {
+        gpsStateStr = QString::fromLocal8Bit("GPS无信号！！！");
+    } else if(GPS_NOT_INITIALIZED == gps_stat){
+        gpsStateStr = QString::fromLocal8Bit("GPS未初始化，请检查连接！");
+    } else if(GPS_UNKNOWN == gps_stat) {
+        gpsStateStr = QString::fromLocal8Bit("GPS未知状态！！!");
+    } else{
+        gpsStateStr = QString::fromLocal8Bit("致命错误，请与我联系!!!");
+    }
+
+    //gps位置信息
+    pBeiDou->getPosition(&ui_heading, &ui_longitude, &ui_latitude, streetStr);
+    gcvt(ui_longitude, 8,longtitudeStr);
+    gcvt(ui_latitude, 8,latitudeStr);
+    itoa(ui_heading , headingStr, 10);
+
+    ui->gpsStateText->setText(gpsStateStr);
+
+    ui->longtitudeText->setText(longtitudeStr);
+    ui->latitudeText->setText(latitudeStr);
+    ui->headingText->setText(headingStr);
+    ui->streetText->setText(QString::fromLocal8Bit(streetStr));
+
+
+}

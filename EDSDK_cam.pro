@@ -1,6 +1,7 @@
 QT += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+#msvc:QMAKE_CXXFLAGS += -source-charset:utf-8
 
 CONFIG += c++11
 
@@ -21,7 +22,9 @@ HEADERS += \
     EDSDK/include/EDSDK.h \
     EDSDK/include/EDSDKErrors.h \
     EDSDK/include/EDSDKTypes.h \
-    BeiDou.h
+    BeiDou.h \
+    Utils.h \
+    EDCamErrors.h
 
 INCLUDEPATH += \
 "C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt" \
